@@ -1,0 +1,23 @@
+		<page name="apply_splash">
+			<template name="dialog_body"/>
+
+			<image>
+				<image resource="snackbar"/>
+				<placement x="0" y="%row_nav_y%" placement="2"/>
+			</image>
+			
+			<text style="text_body1">
+				<placement x="%snackbar_text_x%" y="%snackbar_text_y%"/>
+				<text>{@theme_apply}</text>
+			</text>
+			
+			<action>
+				<!-- klee: recovery lives in the recovery vendor-ramdisk fragment of vendor_boot v4.
+				     Do not use the legacy wlfw/wlfx boot/recovery workflow here. -->
+				<action function="cmd">
+					/system/bin/klee_splash_apply.sh "%spl_bg_user%" "%spl_bg_on%" "%spl_bg_color%" "%spl_logo_type%" "%spl_ofr%" "%of_splash_max_size%";
+				</action>
+				<action function="overlay"/>
+				<action function="page">ext_custom</action>
+			</action>
+		</page>

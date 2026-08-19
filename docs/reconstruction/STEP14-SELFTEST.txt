@@ -1,0 +1,25 @@
+STEP14 STATIC SELF-TEST
+
+prepare stock-like PLATFORM from Build60:
+KLEE STOCK INPUT PREPARATION
+vendor_boot=/mnt/data/60.img
+header_version=4
+page_size=4096
+vendor_cmdline=bootopt=64S3,32N2,64N2 erofs.reserved_pages=64
+platform_name=''
+platform_type=1
+platform_sha256=7851f553ccfc14564ffb9c969100ef1c26d8c0684e0b7d9fb26b6000a168801c
+platform_build60_match=True
+dtb_sha256=0e9e85739150973efff32d8ee9a1727e2442cf8a8ca5c97ebff585268cdb8bc4
+dtb_build60_match=True
+dtbo=not supplied
+KLEE STOCK INPUT PREP: PASS
+
+repack:
+output=/mnt/data/_step14_repacked_60.img
+size=67108864
+sha256=aa7fdc2ebc9f30ecbeaf18a6d982fd86de782600bdd30adf676a17c22e4d0251
+KLEE VENDOR_BOOT REPACK EXACT-GOLDEN: PASS
+
+platform_kernel_module_count=244
+full_image_byte_identical=True

@@ -1,0 +1,1 @@
+4cfe45b4bcbaf83f159b2445e12b3fd12c727f3c986dfc06ebcff35cd2a1c16c  recovery/root/init.recovery.keymint.rc

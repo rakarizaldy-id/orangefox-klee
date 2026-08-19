@@ -1,0 +1,73 @@
+		<page name="klee_tools">
+			<listbox style="group_list">
+				<placement x="0" y="%ab_h%" w="%screen_w%" h="%bl_fullscreen_h%"/>
+				<listitem name="Recovery Self-Test">
+					<icon res="overview"/>
+					<action function="set">tw_back=klee_tools</action>
+					<action function="set">tw_action=terminalcommand</action>
+					<action function="set">tw_action_param=/system/bin/klee-recovery-selftest</action>
+					<action function="set">tw_action_text1=Klee Recovery Self-Test</action>
+					<action function="set">tw_action_text2=Running diagnostics...</action>
+					<action function="set">tw_complete_text1=Self-Test complete</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_has_cancel=0</action>
+					<action function="set">tw_reboot_system=0</action>
+					<action function="page">action_page</action>
+				</listitem>
+				<listitem name="Storage / Partition Health">
+					<icon res="partitions"/>
+					<action function="set">tw_back=klee_tools</action>
+					<action function="set">tw_action=terminalcommand</action>
+					<action function="set">tw_action_param=/system/bin/klee-storage-health</action>
+					<action function="set">tw_action_text1=Klee Storage Health</action>
+					<action function="set">tw_action_text2=Checking storage and partitions...</action>
+					<action function="set">tw_complete_text1=Storage Health complete</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_has_cancel=0</action>
+					<action function="set">tw_reboot_system=0</action>
+					<action function="page">action_page</action>
+				</listitem>
+				<listitem name="Clear OrangeFox Logs">
+					<icon res="overview"/>
+					<action function="set">tw_back=klee_tools</action>
+					<action function="set">tw_action=terminalcommand</action>
+					<action function="set">tw_action_param=/system/bin/klee-clear-logs</action>
+					<action function="set">tw_text1=Clear OrangeFox Logs?</action>
+					<action function="set">tw_text2=Deletes current and saved recovery logs only.</action>
+					<action function="set">tw_text3=Settings, backups, themes and Android data stay untouched.</action>
+					<action function="set">tw_action_text1=Clear OrangeFox Logs</action>
+					<action function="set">tw_action_text2=Clearing recovery logs...</action>
+					<action function="set">tw_complete_text1=OrangeFox logs cleared</action>
+					<action function="set">tw_slider_text=Swipe to Clear Logs</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_has_cancel=0</action>
+					<action function="set">tw_reboot_system=0</action>
+					<action function="page">confirm_action</action>
+				</listitem>
+				<listitem name="Fenrir Install / Repair">
+					<icon res="wrench"/>
+					<action function="set">tw_back=klee_tools</action>
+					<action function="set">tw_action=terminalcommand</action>
+					<action function="set">tw_action_param=/system/bin/klee-fenrir-install</action>
+					<action function="set">tw_text1=Fenrir Install / Repair?</action>
+					<action function="set">tw_text2=Repairs Fenrir preloader, LK and OrangeFox vendor_boot on A/B.</action>
+					<action function="set">tw_text3=Only mismatches are written; every write is verified.</action>
+					<action function="set">tw_action_text1=Fenrir Install / Repair</action>
+					<action function="set">tw_action_text2=Checking and repairing Fenrir components...</action>
+					<action function="set">tw_complete_text1=Fenrir operation complete</action>
+					<action function="set">tw_slider_text=Swipe to Install / Repair</action>
+					<action function="set">tw_has_action2=0</action>
+					<action function="set">tw_has_cancel=0</action>
+					<action function="set">tw_reboot_system=0</action>
+					<action function="page">confirm_action</action>
+				</listitem>
+			</listbox>
+			<template name="base"/>
+			<text style="text_ab_title">
+				<placement x="%col1_x_indent%" y="%ab_bc_y%"/>
+				<text>Klee Tools</text>
+			</text>
+			<template name="gestures"/>
+			<action><touch key="home"/><action function="page">main</action></action>
+			<action><touch key="back"/><action function="page">advanced</action></action>
+		</page>

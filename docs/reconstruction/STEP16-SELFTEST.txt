@@ -1,0 +1,26 @@
+STEP16 CORE PATCH STATIC SELF-TEST
+
+source fixture apply                  PASS
+source patch second-run idempotence   PASS
+source patch --check                  PASS
+upstream-drift fail-closed fixture    PASS
+FOX_BRANCH source identity            PASS (klee)
+ODM exact-path EBUSY gate             PASS
+ODM lazy detach + mount verification  PASS
+original errno restore                PASS
+Build60 binary shim ramdisk removal   PASS
+shim cleanup idempotence              PASS
+broad old recovery patch imported     NO
+
+fixture first apply:
+KLEE SOURCE PATCH: PASS
+ - FOX_BRANCH=klee: patched
+ - /odm EBUSY source fix: patched
+
+fixture second apply:
+KLEE SOURCE PATCH: PASS
+ - FOX_BRANCH=klee: already applied
+ - /odm EBUSY source fix: already applied
+
+fixture check:
+KLEE SOURCE PATCH CHECK: PASS

@@ -1,0 +1,162 @@
+#!/system/bin/sh
+# KleeWipePrepV2 (Build50): release every known metadata-backed OrangeFox
+# settings bind immediately before Format Data or Advanced Wipe /metadata.
+# Other wipe operations are a strict no-op.
+LOG=/tmp/recovery.log
+ACTION="$1"
+LIST="$2"
+# Build60: restore touch_report only if DATAMEDIA pre-stage actually stopped it.
+# Runtime proof on klee: after Format Data, /dev/input/event2 remains present but
+# touch_report stays stopped; `start touch_report` restores GUI touch without ODM.
+if [ "$ACTION" = "POSTDATAMEDIA" ]; then
+    if [ ! -f "/tmp/klee-wipe-touch-report-resume" ]; then
+        echo "I:KleeWipePrepV5: post-Format Data touch_report resume not requested" >> "$LOG"
+        exit 0
+    fi
+
+    tr_state=$(getprop init.svc.touch_report 2>/dev/null)
+    tr_pid=$(pidof touch_report 2>/dev/null)
+    if [ "$tr_state" = "running" ] || [ -n "$tr_pid" ]; then
+        rm -f "/tmp/klee-wipe-touch-report-resume"
+        echo "I:KleeWipePrepV5: post-Format Data touch_report already running state=$tr_state pid=$tr_pid" >> "$LOG"
+        exit 0
+    fi
+
+    echo "I:KleeWipePrepV5: post-Format Data resuming touch_report" >> "$LOG"
+    start touch_report >/dev/null 2>&1 || setprop ctl.start touch_report >/dev/null 2>&1
+    i=0
+    while [ "$i" -lt 3 ]; do
+        tr_state=$(getprop init.svc.touch_report 2>/dev/null)
+        tr_pid=$(pidof touch_report 2>/dev/null)
+        if [ "$tr_state" = "running" ] || [ -n "$tr_pid" ]; then
+            rm -f "/tmp/klee-wipe-touch-report-resume"
+            echo "I:KleeWipePrepV5: post-Format Data touch_report ready state=$tr_state pid=$tr_pid" >> "$LOG"
+            exit 0
+        fi
+        sleep 1
+        i=$((i + 1))
+    done
+
+    tr_state=$(getprop init.svc.touch_report 2>/dev/null)
+    tr_pid=$(pidof touch_report 2>/dev/null)
+    echo "E:KleeWipePrepV5: post-Format Data touch_report resume failed state=$tr_state pid=$tr_pid" >> "$LOG"
+    exit 1
+fi
+
+# Build55: post-Advanced-Wipe Data FBE parent repair.
+# Native Data wipe preserves /data/media and key material, but on Android 16 it
+# removes parent CE/DE directory skeletons that fscrypt_init_user0 expects on the
+# next recovery boot. Repair ONLY that preserve-media case. Data+Metadata is
+# intentionally destructive and must not be repaired here.
+if [ "$ACTION" = "POSTLIST" ]; then
+    case "$LIST" in *"/data;"*) ;; *) exit 0 ;; esac
+    case "$LIST" in *"/metadata;"*) exit 0 ;; esac
+    [ -d /data/unencrypted/key ] || exit 0
+    [ -d /metadata/vold/metadata_encryption/key ] || exit 0
+    grep -qs " /data " /proc/mounts || exit 0
+
+    echo "I:KleeWipePrepV3: post-data FBE parent repair start list=$LIST" >> "$LOG"
+    failed=0
+    make_parent() {
+        path="$1"; owner="$2"; group="$3"; mode="$4"
+        [ -d "$path" ] && return 0
+        if mkdir -p "$path" 2>/dev/null; then
+            chown "$owner:$group" "$path" 2>/dev/null || failed=1
+            chmod "$mode" "$path" 2>/dev/null || failed=1
+            restorecon "$path" >/dev/null 2>&1 || failed=1
+            echo "I:KleeWipePrepV3: restored FBE parent $path" >> "$LOG"
+        else
+            echo "E:KleeWipePrepV3: failed to create FBE parent $path" >> "$LOG"
+            failed=1
+        fi
+    }
+
+    # Matches the Android-16 parent skeleton proven at runtime on klee.
+    make_parent /data/system/users system system 0775
+    make_parent /data/misc/profiles system system 0771
+    make_parent /data/misc/profiles/cur system system 0771
+    make_parent /data/misc/profiles/ref system system 0771
+    make_parent /data/misc_ce system misc 0551
+    make_parent /data/misc_de system misc 0551
+    make_parent /data/system_ce system system 0550
+    make_parent /data/user_de system system 0511
+    make_parent /data/vendor_ce root root 0551
+    make_parent /data/vendor_de root root 0551
+    sync
+
+    if [ "$failed" != "0" ]; then
+        echo "E:KleeWipePrepV3: post-data FBE parent repair failed" >> "$LOG"
+        exit 1
+    fi
+    echo "I:KleeWipePrepV3: post-data FBE parent repair ready" >> "$LOG"
+    exit 0
+fi
+
+need=0
+reason=none
+case "$ACTION" in
+    DATAMEDIA)
+        # Build60: clear stale resume intent, then set it only if this invocation
+        # actually quiesces a running touch_report instance.
+        rm -f "/tmp/klee-wipe-touch-report-resume"
+        # Build59: touch_report keeps /odm/firmware/*.tflite FDs open on klee,
+        # which makes native Unmap_Super_Devices fail at odm_a during Format Data.
+        # Quiesce the init service here so the GUI path works without manual ADB.
+        tr_state=$(getprop init.svc.touch_report 2>/dev/null)
+        tr_pid=$(pidof touch_report 2>/dev/null)
+        if [ "$tr_state" = "running" ] || [ -n "$tr_pid" ]; then
+            echo "I:KleeWipePrepV4: Format Data quiesce touch_report state=$tr_state pid=$tr_pid" >> "$LOG"
+            : > "/tmp/klee-wipe-touch-report-resume" || {
+                echo "E:KleeWipePrepV5: cannot create touch_report resume marker" >> "$LOG"
+                exit 1
+            }
+            stop touch_report >/dev/null 2>&1 || setprop ctl.stop touch_report >/dev/null 2>&1
+            i=0
+            while [ "$i" -lt 3 ]; do
+                tr_pid=$(pidof touch_report 2>/dev/null)
+                [ -z "$tr_pid" ] && break
+                sleep 1
+                i=$((i + 1))
+            done
+            tr_pid=$(pidof touch_report 2>/dev/null)
+            if [ -n "$tr_pid" ]; then
+                rm -f "/tmp/klee-wipe-touch-report-resume"
+                echo "E:KleeWipePrepV4: touch_report still running pid=$tr_pid; abort Format Data prep" >> "$LOG"
+                exit 1
+            fi
+            echo "I:KleeWipePrepV4: touch_report stopped; /odm release ready" >> "$LOG"
+        else
+            echo "I:KleeWipePrepV4: touch_report already stopped" >> "$LOG"
+        fi
+        need=1
+        reason=format-data
+        ;;
+    LIST)
+        case "$LIST" in
+            *"/metadata;"*)
+                need=1
+                reason=wipe-metadata
+                ;;
+        esac
+        ;;
+esac
+[ "$need" = "1" ] || exit 0
+echo "I:KleeWipePrepV2: start reason=$reason action=$ACTION list=$LIST" >> "$LOG"
+# Build38 settings can be visible through several bind aliases after decrypt.
+# Unmount only the aliases; never delete/copy the underlying .foxs file here.
+for mp in /persist/.foxs /mnt/vendor/persist/.foxs /sdcard/Fox/.foxs /data/media/0/Fox/.foxs; do
+    if grep -qs " $mp " /proc/mounts; then
+        if umount "$mp" 2>/dev/null; then
+            echo "I:KleeWipePrepV2: unmounted $mp" >> "$LOG"
+        else
+            echo "E:KleeWipePrepV2: failed to unmount $mp" >> "$LOG"
+        fi
+    fi
+done
+sync
+if grep -qsE ' /persist/\.foxs | /mnt/vendor/persist/\.foxs | /sdcard/Fox/\.foxs | /data/media/0/Fox/\.foxs ' /proc/mounts; then
+    echo "E:KleeWipePrepV2: metadata-backed .foxs bind remains" >> "$LOG"
+    exit 1
+fi
+echo "I:KleeWipePrepV2: ready" >> "$LOG"
+exit 0

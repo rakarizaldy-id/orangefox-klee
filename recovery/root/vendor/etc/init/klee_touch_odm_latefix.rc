@@ -1,0 +1,11 @@
+# KleeTouchFixV2: ODM-ready late restart
+service klee_touch_odm_latefix /system/bin/klee_touch_odm_latefix.sh
+    class core
+    user root
+    group root
+    oneshot
+    disabled
+    seclabel u:r:recovery:s0
+
+on init
+    start klee_touch_odm_latefix

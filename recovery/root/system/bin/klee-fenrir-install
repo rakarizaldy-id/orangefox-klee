@@ -1,0 +1,274 @@
+#!/system/bin/sh
+
+PRE_XZ=/system/etc/klee-fenrir-preloader.xz
+LK_XZ=/system/etc/klee-fenrir-lk.xz
+PRE_TMP=/tmp/klee-fenrir-preloader.bin
+LK_TMP=/tmp/klee-fenrir-lk.bin
+PRE_SIZE=974452
+PRE_HASH=92b4117c61dcc9c6c4a9273ec4dce65b2f08eadec784f202af39d9e1685ef4a4
+LK_SIZE=4147472
+LK_HASH=fdb67811fa3d7a3ffcddd66bf0f1c8878a6a81388f0da8f37f6bca929943fc22
+VB_SIZE=67108864
+CACHE_DIR=/data/media/0/Fox/Fenrir
+CACHE_IMG=$CACHE_DIR/vendor_boot.img
+CACHE_SHA=$CACHE_DIR/vendor_boot.sha256
+FAIL=0
+
+hash_exact() {
+    p="$1"
+    n="$2"
+    [ -r "$p" ] || { echo UNREADABLE; return 1; }
+    h=$(head -c "$n" "$p" 2>/dev/null | sha256sum)
+    echo "${h%% *}"
+}
+
+hash_full() {
+    p="$1"
+    [ -r "$p" ] || { echo UNREADABLE; return 1; }
+    h=$(sha256sum "$p" 2>/dev/null)
+    echo "${h%% *}"
+}
+
+check_exact() {
+    label="$1"; path="$2"; size="$3"; gold="$4"
+    h=$(hash_exact "$path" "$size")
+    if [ "$h" = "$gold" ]; then
+        echo "$label: MATCH"
+        return 0
+    fi
+    echo "$label: DIFFERENT"
+    echo "  sha256=$h"
+    return 1
+}
+
+write_exact() {
+    label="$1"; src="$2"; dst="$3"; size="$4"; gold="$5"
+    if check_exact "$label" "$dst" "$size" "$gold"; then
+        echo "  action=SKIP"
+        return 0
+    fi
+    bsz=$(blockdev --getsize64 "$dst" 2>/dev/null)
+    if [ -z "$bsz" ] || [ "$bsz" -lt "$size" ]; then
+        echo "  action=ABORT invalid target size=$bsz"
+        return 1
+    fi
+    echo "  action=WRITE"
+    if ! dd if="$src" of="$dst" bs=1048576 2>&1; then
+        echo "  result=WRITE FAILED"
+        return 1
+    fi
+    sync
+    h=$(hash_exact "$dst" "$size")
+    if [ "$h" != "$gold" ]; then
+        echo "  result=VERIFY FAILED sha256=$h"
+        return 1
+    fi
+    echo "  result=VERIFIED"
+    return 0
+}
+
+valid_cache() {
+    [ -f "$CACHE_IMG" ] && [ -f "$CACHE_SHA" ] || return 1
+    sz=$(wc -c < "$CACHE_IMG" 2>/dev/null)
+    [ "$sz" = "$VB_SIZE" ] || return 1
+    expected=$(cat "$CACHE_SHA" 2>/dev/null | head -n 1)
+    [ -n "$expected" ] || return 1
+    actual=$(hash_full "$CACHE_IMG")
+    [ "$actual" = "$expected" ] || return 1
+    VB_GOLD_HASH="$actual"
+    return 0
+}
+
+cache_from_active() {
+    src="$1"
+    mode="$2"
+    if [ "$mode" = "STALE" ]; then
+        echo "VENDOR_BOOT CACHE: STALE"
+        echo "  cached_sha256=$VB_GOLD_HASH"
+        echo "  active_sha256=$ACTIVE_VB_HASH"
+        echo "  action=REFRESH FROM ACTIVE"
+    else
+        echo "VENDOR_BOOT CACHE: MISSING"
+        echo "  seeding from running active OrangeFox slot"
+    fi
+    if ! mkdir -p "$CACHE_DIR"; then
+        echo "  result=ABORT cannot create $CACHE_DIR"
+        return 1
+    fi
+    tmp="$CACHE_IMG.tmp"
+    tmpsha="$CACHE_SHA.tmp"
+    rm -f "$tmp" "$tmpsha"
+    if ! dd if="$src" of="$tmp" bs=1048576 count=64 2>&1; then
+        rm -f "$tmp" "$tmpsha"
+        echo "  result=ABORT cache copy failed"
+        return 1
+    fi
+    sz=$(wc -c < "$tmp" 2>/dev/null)
+    if [ "$sz" != "$VB_SIZE" ]; then
+        rm -f "$tmp" "$tmpsha"
+        echo "  result=ABORT cache size=$sz expected=$VB_SIZE"
+        return 1
+    fi
+    new_hash=$(hash_full "$tmp")
+    if [ -z "$new_hash" ] || [ "$new_hash" = UNREADABLE ]; then
+        rm -f "$tmp" "$tmpsha"
+        echo "  result=ABORT cache hash failed"
+        return 1
+    fi
+    if [ "$new_hash" != "$ACTIVE_VB_HASH" ]; then
+        rm -f "$tmp" "$tmpsha"
+        echo "  result=ABORT active cache readback mismatch sha256=$new_hash"
+        return 1
+    fi
+    echo "$new_hash" > "$tmpsha" || { rm -f "$tmp" "$tmpsha"; return 1; }
+    mv "$tmp" "$CACHE_IMG" || { rm -f "$tmp" "$tmpsha"; return 1; }
+    mv "$tmpsha" "$CACHE_SHA" || { rm -f "$tmpsha"; return 1; }
+    sync
+    VB_GOLD_HASH="$new_hash"
+    echo "  sha256=$VB_GOLD_HASH"
+    if [ "$mode" = "STALE" ]; then
+        echo "  result=CACHE REFRESHED"
+    else
+        echo "  result=CACHE SEEDED"
+    fi
+    return 0
+}
+
+repair_vendor_slot() {
+    label="$1"; dst="$2"
+    sz=$(blockdev --getsize64 "$dst" 2>/dev/null)
+    if [ "$sz" != "$VB_SIZE" ]; then
+        echo "$label: ABORT size=$sz expected=$VB_SIZE"
+        return 1
+    fi
+    h=$(hash_full "$dst")
+    if [ "$h" = "$VB_GOLD_HASH" ]; then
+        echo "$label: MATCH"
+        echo "  action=SKIP"
+        return 0
+    fi
+    echo "$label: DIFFERENT"
+    echo "  sha256=$h"
+    echo "  action=WRITE CACHE"
+    if ! dd if="$CACHE_IMG" of="$dst" bs=1048576 2>&1; then
+        echo "  result=WRITE FAILED"
+        return 1
+    fi
+    sync
+    h=$(hash_full "$dst")
+    if [ "$h" != "$VB_GOLD_HASH" ]; then
+        echo "  result=VERIFY FAILED sha256=$h"
+        return 1
+    fi
+    echo "  result=VERIFIED"
+    return 0
+}
+
+echo "=== FENRIR INSTALL / REPAIR V1 ==="
+DEVICE=$(getprop ro.product.device)
+SLOT=$(getprop ro.boot.slot_suffix)
+echo "device=$DEVICE slot=$SLOT"
+if [ "$DEVICE" != "klee" ]; then
+    echo "DEVICE: FAIL expected klee"
+    exit 2
+fi
+case "$SLOT" in
+    _a|a) ACTIVE_VB=/dev/block/by-name/vendor_boot_a ;;
+    _b|b) ACTIVE_VB=/dev/block/by-name/vendor_boot_b ;;
+    *) echo "SLOT: FAIL unknown slot '$SLOT'"; exit 2 ;;
+esac
+echo "DEVICE: PASS"
+
+USER0_DECRYPT=$(getprop twrp.user.0.decrypt)
+DECRYPT_DONE=$(getprop twrp.decrypt.done)
+if [ "$USER0_DECRYPT" != "1" ] || [ "$DECRYPT_DONE" != "true" ]; then
+    echo "FBE: LOCKED"
+    echo "  user0=$USER0_DECRYPT done=$DECRYPT_DONE"
+    echo "  action=REFUSE"
+    echo "  reason=user 0 must be decrypted first"
+    echo "=== FENRIR NOT READY ==="
+    exit 4
+fi
+echo "FBE: DECRYPTED"
+
+rm -f "$PRE_TMP" "$LK_TMP"
+if ! xz -dc "$PRE_XZ" > "$PRE_TMP"; then echo "ASSET preloader: FAIL decompress"; exit 3; fi
+if ! xz -dc "$LK_XZ" > "$LK_TMP"; then echo "ASSET LK: FAIL decompress"; exit 3; fi
+pre_sz=$(wc -c < "$PRE_TMP" 2>/dev/null)
+lk_sz=$(wc -c < "$LK_TMP" 2>/dev/null)
+pre_h=$(hash_full "$PRE_TMP")
+lk_h=$(hash_full "$LK_TMP")
+if [ "$pre_sz" != "$PRE_SIZE" ] || [ "$pre_h" != "$PRE_HASH" ]; then
+    echo "ASSET preloader: FAIL size=$pre_sz sha256=$pre_h"
+    exit 3
+fi
+if [ "$lk_sz" != "$LK_SIZE" ] || [ "$lk_h" != "$LK_HASH" ]; then
+    echo "ASSET LK: FAIL size=$lk_sz sha256=$lk_h"
+    exit 3
+fi
+echo "ASSETS: VERIFIED"
+
+echo "--- PRELOADER ---"
+write_exact PRELOADER_A "$PRE_TMP" /dev/block/mapper/preloader_raw_a "$PRE_SIZE" "$PRE_HASH" || FAIL=1
+write_exact PRELOADER_B "$PRE_TMP" /dev/block/mapper/preloader_raw_b "$PRE_SIZE" "$PRE_HASH" || FAIL=1
+
+echo "--- LK ---"
+write_exact LK_A "$LK_TMP" /dev/block/by-name/lk_a "$LK_SIZE" "$LK_HASH" || FAIL=1
+write_exact LK_B "$LK_TMP" /dev/block/by-name/lk_b "$LK_SIZE" "$LK_HASH" || FAIL=1
+
+echo "--- VENDOR_BOOT ---"
+ACTIVE_VB_SIZE=$(blockdev --getsize64 "$ACTIVE_VB" 2>/dev/null)
+ACTIVE_VB_HASH=$(hash_full "$ACTIVE_VB")
+if [ "$ACTIVE_VB_SIZE" != "$VB_SIZE" ] || [ -z "$ACTIVE_VB_HASH" ] || [ "$ACTIVE_VB_HASH" = UNREADABLE ]; then
+    echo "VENDOR_BOOT ACTIVE: INVALID"
+    echo "  size=$ACTIVE_VB_SIZE sha256=$ACTIVE_VB_HASH"
+    echo "  action=REFUSE vendor_boot repair"
+    FAIL=1
+    VB_GOLD_HASH=""
+elif valid_cache; then
+    if [ "$VB_GOLD_HASH" = "$ACTIVE_VB_HASH" ]; then
+        echo "VENDOR_BOOT CACHE: VERIFIED"
+        echo "  sha256=$VB_GOLD_HASH"
+    else
+        cache_from_active "$ACTIVE_VB" STALE || { FAIL=1; VB_GOLD_HASH=""; }
+    fi
+else
+    if [ -e "$CACHE_IMG" ] || [ -e "$CACHE_SHA" ]; then
+        echo "VENDOR_BOOT CACHE: INVALID"
+        echo "  action=REFUSE vendor_boot repair"
+        echo "  reason=existing cache failed size/hash validation"
+        FAIL=1
+        VB_GOLD_HASH=""
+    else
+        cache_from_active "$ACTIVE_VB" MISSING || { FAIL=1; VB_GOLD_HASH=""; }
+    fi
+fi
+if [ -n "$VB_GOLD_HASH" ]; then
+    repair_vendor_slot VENDOR_BOOT_A /dev/block/by-name/vendor_boot_a || FAIL=1
+    repair_vendor_slot VENDOR_BOOT_B /dev/block/by-name/vendor_boot_b || FAIL=1
+fi
+
+rm -f "$PRE_TMP" "$LK_TMP"
+
+echo "--- FINAL VERIFY ---"
+FINAL=0
+check_exact PRELOADER_A /dev/block/mapper/preloader_raw_a "$PRE_SIZE" "$PRE_HASH" || FINAL=1
+check_exact PRELOADER_B /dev/block/mapper/preloader_raw_b "$PRE_SIZE" "$PRE_HASH" || FINAL=1
+check_exact LK_A /dev/block/by-name/lk_a "$LK_SIZE" "$LK_HASH" || FINAL=1
+check_exact LK_B /dev/block/by-name/lk_b "$LK_SIZE" "$LK_HASH" || FINAL=1
+if [ -n "$VB_GOLD_HASH" ]; then
+    a=$(hash_full /dev/block/by-name/vendor_boot_a)
+    b=$(hash_full /dev/block/by-name/vendor_boot_b)
+    [ "$a" = "$VB_GOLD_HASH" ] && echo "VENDOR_BOOT_A: MATCH" || { echo "VENDOR_BOOT_A: DIFFERENT sha256=$a"; FINAL=1; }
+    [ "$b" = "$VB_GOLD_HASH" ] && echo "VENDOR_BOOT_B: MATCH" || { echo "VENDOR_BOOT_B: DIFFERENT sha256=$b"; FINAL=1; }
+else
+    FINAL=1
+fi
+
+if [ "$FAIL" -eq 0 ] && [ "$FINAL" -eq 0 ]; then
+    echo "=== FENRIR READY ==="
+    exit 0
+fi
+
+echo "=== FENRIR NOT READY ==="
+exit 1

@@ -1,0 +1,5 @@
+2ba9efb6ae80c28713a0bda7540ff3a50335b30ca91de0497a593425aeef7a3d  recovery/root/init.recovery.mt6899.rc
+e9dde5655db30dcce1a8abf7a23c7db907790d791a625559a14257aad3323846  recovery/root/init.recovery.project.rc
+aae8c3c52d4faea9ef693b853b192a9e5248f3bdad592e13453d22e8839c0752  recovery/root/init.recovery.usb.rc
+ae756efe450321f1b1850c8175e20ed32c27e7a8299364e829b03b5f46975516  recovery/root/vendor/etc/init/klee_touch_odm_latefix.rc
+44757e0a41c23f86a13dddaacf2e47b6c7ed135cb36dd72020248620a062bd55  recovery/root/vendor/etc/init/klee_haptic_stock_init.rc

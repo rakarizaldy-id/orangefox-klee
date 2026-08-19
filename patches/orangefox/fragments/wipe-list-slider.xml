@@ -1,0 +1,16 @@
+			<slider style="slider_action">
+				<placement x="%center_x%" y="%slider_np_y%" placement="5"/>
+				<action function="set">tw_back=wipe</action>
+				<!-- KleeWipePrepV3 (Build52): use OrangeFox native two-action queue. -->
+				<action function="set">tw_action=cmd</action>
+				<action function="set">tw_action_param=/system/bin/klee-wipe-prep 'LIST' '%tw_wipe_list%'</action>
+				<action function="set">tw_has_action2=1</action>
+				<action function="set">tw_action2=wipe</action>
+				<action function="set">tw_action2_param=LIST</action>
+				<action function="set">tw_text1={@wipe_sel_confirm}</action>
+				<action function="set">tw_action_text1={@advanced_wipe_hdr}</action>
+				<action function="set">tw_action_text2={@wiping_part}</action>
+				<action function="set">tw_complete_text1={@wipe_complete}</action>
+				<action function="set">klee_wipe_queue_done=0</action>
+				<action function="page">wipe_action_page</action>
+			</slider>

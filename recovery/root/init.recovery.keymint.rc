@@ -1,0 +1,197 @@
+service tee-supplicant /vendor/bin/tee-supplicant
+    class core
+    user system
+    group system secure_element nfc
+    capabilities SYS_RAWIO
+    setenv LD_LIBRARY_PATH /system/lib64
+    seclabel u:r:recovery:s0
+    disabled
+
+service vendor.keymint-mitee /vendor/bin/hw/android.hardware.security.keymint@3.0-service.mitee
+    class early_hal
+    user system
+    group system drmrpc
+    setenv LD_LIBRARY_PATH /system/lib64
+    setenv LD_PRELOAD /system/lib64/libklee_libcxx_compat.so
+    seclabel u:r:recovery:s0
+    disabled
+
+service vendor.gatekeeper_mitee /vendor/bin/hw/android.hardware.gatekeeper-service.mitee
+    class hal
+    user system
+    group system
+    setenv LD_LIBRARY_PATH /system/lib64
+    setenv LD_PRELOAD /system/lib64/libklee_libcxx_compat.so
+    seclabel u:r:recovery:s0
+
+service vendor.secure_element_hal_service /vendor/bin/hw/vendor.xiaomi.hardware.secure_element-service
+    class hal
+    user system
+    group system secure_element nfc
+    setenv LD_LIBRARY_PATH /vendor/lib64:/system/lib64
+    setenv LD_PRELOAD /system/lib64/libklee_libcxx_compat.so
+    seclabel u:r:recovery:s0
+    disabled
+
+service klee.omapi_bridge /system/bin/klee_omapi_bridge
+    class hal
+    user system
+    group system secure_element nfc
+    setenv LD_LIBRARY_PATH /vendor/lib64:/system/lib64
+    setenv LD_PRELOAD /system/lib64/libklee_libcxx_compat.so
+    seclabel u:r:recovery:s0
+    disabled
+
+service miweaver_hal_service /vendor/bin/hw/vendor.xiaomi.hardware.authsecretd
+    class hal
+    user system
+    group system drmrpc
+    oneshot
+    disabled
+    interface aidl vendor.xiaomi.hardware.miauthsecretd.IMIAuthSecret/default
+    interface aidl vendor.xiaomi.hardware.miauthsecretd.ICpaceService/default
+    setenv LD_LIBRARY_PATH /system/lib64:/vendor/lib64
+    setenv LD_PRELOAD /system/lib64/libc++_hos.so
+    seclabel u:r:recovery:s0
+
+service vendor.weaver_nxp /vendor/bin/hw/android.hardware.weaver-service.nxp
+    class hal
+    user 2902
+    group system drmrpc
+    capabilities WAKE_ALARM
+    setenv LD_LIBRARY_PATH /system/lib64:/vendor/lib64
+    setenv LD_PRELOAD /system/lib64/libc++_hos.so
+    seclabel u:r:recovery:s0
+    disabled
+
+# Pure CN backend. This service registers the same IWeaver/default interface,
+# but remains disabled and is only started by klee_fbe_prep on CN devices.
+service vendor.weaver_xiaomi /system/bin/klee_miweaver_wait.sh
+    class hal
+    user system
+    group system drmrpc
+    setenv LD_LIBRARY_PATH /system/lib64:/vendor/lib64
+    setenv LD_PRELOAD /system/lib64/libc++_hos.so
+    seclabel u:r:recovery:s0
+    disabled
+
+service klee.fbe_prep /system/bin/klee_fbe_prep.sh
+    class hal
+    user root
+    group root system
+    seclabel u:r:recovery:s0
+    disabled
+    oneshot
+
+# Klee StatusVarsPreload V3 launcher: synchronous pre-GUI preload plus an
+# asynchronous delayed cleanup that waits for the first post-decrypt theme reload.
+service klee.status_vars_preload /system/bin/sh /system/bin/fox-status-preload.sh
+    class core
+    user root
+    group root system
+    seclabel u:r:recovery:s0
+    disabled
+    oneshot
+
+service klee.status_vars_cleanup /system/bin/sh /system/bin/fox-status-preload.sh cleanup-delayed
+    class core
+    user root
+    group root system
+    seclabel u:r:recovery:s0
+    disabled
+    oneshot
+
+on fs
+    mkdir /mnt/vendor/persist 0755 root root
+    mount ext4 /dev/block/by-name/persist /mnt/vendor/persist ro noatime nosuid nodev wait noload
+    mkdir /persist 0755 root root
+    mount none /mnt/vendor/persist /persist bind
+    mount none none /persist private
+    # Klee: mount metadata early for pre-decrypt OrangeFox settings.
+    mount f2fs /dev/block/by-name/metadata /metadata rw noatime nosuid nodev discard
+    # Stage OrangeFox style/accent overrides into the temporary pre-decrypt
+    # /sdcard ramdisk path. Self-heal older 0660 metadata copies first because
+    # Android init refuses group-writable files as copy sources.
+    mkdir /sdcard/Fox 0755 root root
+    mkdir /sdcard/Fox/.theme 0755 root root
+    chmod 0644 /metadata/Fox/.theme/style.xml
+    chmod 0644 /metadata/Fox/.theme/accent.xml
+    copy /metadata/Fox/.theme/style.xml /sdcard/Fox/.theme/style.xml
+    copy /metadata/Fox/.theme/accent.xml /sdcard/Fox/.theme/accent.xml
+    chmod 0644 /sdcard/Fox/.theme/style.xml
+    chmod 0644 /sdcard/Fox/.theme/accent.xml
+    # Bind metadata-backed settings onto the stock OrangeFox startup path.
+    mount none /metadata/Fox/.foxs /persist/.foxs bind
+    # Klee StatusVarsPreload V3 launcher: synchronous recovery-domain preload.
+    exec_start klee.status_vars_preload
+    # Reconcile metadata/fallback once when encrypted /data becomes available.
+    start klee.fox_profile_sync
+    # Global NXP Weaver/eSE: complete the stock SN110X probe chain before
+    # node permissions and before the Secure Element HAL is instantiated.
+    insmod /lib/modules/nxp_i2c.ko
+    insmod /lib/modules/p73.ko
+    insmod /lib/modules/tms_device_modules.ko
+    wait /dev/nq-nci 5
+    wait /dev/p73 5
+    chmod 0660 /dev/tee0
+    chmod 0660 /dev/teepriv0
+    chmod 0660 /dev/rpmb0
+    chmod 0660 /dev/mmcblk0rpmb
+    chmod 0660 /dev/0:0:0:49476
+    chmod 0660 /dev/ufs-bsg0
+    chmod 0660 /dev/nq-nci
+    chmod 0660 /dev/p73
+    chmod 0666 /dev/kmsg
+    chown system system /dev/tee0
+    chown system system /dev/teepriv0
+    chown system system /dev/rpmb0
+    chown system system /dev/mmcblk0rpmb
+    chown system system /dev/0:0:0:49476
+    chown system system /dev/ufs-bsg0
+    chown nfc radio /dev/nq-nci
+    chown system secure_element /dev/p73
+    setprop vendor.teefs_state ready
+    setprop ro.hardware.gatekeeper mitee
+    start tee-supplicant
+
+on property:init.svc.tee-supplicant=running
+    start vendor.keymint-mitee
+    start vendor.secure_element_hal_service
+    start klee.fbe_prep
+
+on property:init.svc.vendor.secure_element_hal_service=running
+    start klee.omapi_bridge
+
+service klee.fox_settings_sync /system/bin/sh /system/bin/fox-settings-sync.sh
+    class core
+    user root
+    group root system
+    seclabel u:r:recovery:s0
+    disabled
+    oneshot
+
+service klee.fox_theme_sync /system/bin/sh /system/bin/fox-theme-sync.sh
+    class core
+    user root
+    group root system
+    seclabel u:r:recovery:s0
+    disabled
+
+# KleeFoxProfileSync V2 (Build24): one-shot selective reconciliation only.
+# No continuous two-way watcher.
+service klee.fox_profile_sync /system/bin/sh /system/bin/fox-profile-sync.sh
+    class core
+    user root
+    group root system
+    seclabel u:r:recovery:s0
+    disabled
+    oneshot
+
+on property:twrp.decrypt.done=true
+    # End any predecrypt wait before the postdecrypt event bridge.
+    stop klee.fox_profile_sync
+    # Keep patched vars.xml through the first post-decrypt InfoManager/theme reload,
+    # then unbind asynchronously so later status-bar changes can save normally.
+    start klee.status_vars_cleanup
+    start klee.fox_settings_sync
+    start klee.fox_theme_sync

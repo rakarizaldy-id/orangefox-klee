@@ -1,0 +1,42 @@
+#!/system/bin/sh
+# Klee Clear OrangeFox Logs V1
+# Deletes only OrangeFox recovery log files. Keeps settings, backups, themes,
+# releaseinfo.json and Android user data intact.
+
+LOGDIR=/data/media/0/Fox/logs
+
+printf '%s\n' '=== CLEAR ORANGEFOX LOGS ==='
+printf '%s\n' 'Clearing current and saved recovery logs...'
+
+# Saved OrangeFox recovery logs only. Do not delete releaseinfo.json.
+rm -f "$LOGDIR/lastrecoverylog.log"
+rm -f "$LOGDIR"/recovery_*.log.zip
+
+# Active session log. Recovery may immediately append new lines after this.
+if [ -e /tmp/recovery.log ]; then
+    : > /tmp/recovery.log
+fi
+
+sync
+
+saved=0
+[ -e "$LOGDIR/lastrecoverylog.log" ] && saved=$((saved+1))
+for f in "$LOGDIR"/recovery_*.log.zip; do
+    [ -e "$f" ] && saved=$((saved+1))
+done
+
+if [ "$saved" -eq 0 ]; then
+    printf '%s\n' 'PASS saved OrangeFox recovery logs cleared'
+else
+    printf 'WARN %s saved recovery log file(s) remain\n' "$saved"
+fi
+
+if [ -e "$LOGDIR/releaseinfo.json" ]; then
+    printf '%s\n' 'PASS releaseinfo.json preserved'
+else
+    printf '%s\n' 'INFO releaseinfo.json not present'
+fi
+
+printf '%s\n' 'PASS settings/backups/themes/Android data untouched'
+printf '%s\n' '=== CLEAR LOGS COMPLETE ==='
+exit 0

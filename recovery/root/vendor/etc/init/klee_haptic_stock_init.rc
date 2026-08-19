@@ -1,0 +1,11 @@
+# KleeHapticStockLikeV2 - Build35 TEST
+service klee.haptic_stock_init /system/bin/klee_haptic_stock_init.sh
+    class core
+    user root
+    group root
+    oneshot
+    disabled
+    seclabel u:r:recovery:s0
+
+on init
+    start klee.haptic_stock_init

@@ -1,0 +1,112 @@
+#!/system/bin/sh
+# Klee Storage / Partition Health V3
+# ROM-agnostic, dynamic-partition-aware, read-only.
+
+LOG=/tmp/klee-storage-health.log
+: > "$LOG"
+fail=0
+warn=0
+
+out()   { echo "$*" | tee -a "$LOG"; }
+pass()  { out "PASS $*"; }
+info()  { out "INFO $*"; }
+warnf() { out "WARN $*"; warn=$((warn+1)); }
+failf() { out "FAIL $*"; fail=$((fail+1)); }
+
+slot=$(getprop ro.boot.slot_suffix)
+out "=== KLEE STORAGE / PARTITION HEALTH V3 ==="
+out "ROM-agnostic dynamic partition check"
+out "slot=${slot:-unknown}"
+out ""
+
+out "[CORE STORAGE]"
+for p in data metadata cache; do
+    line=$(mount | grep " on /$p " | head -n 1)
+    if [ -n "$line" ]; then
+        src=$(echo "$line" | awk '{print $1}')
+        fs=$(echo "$line" | awk '{print $5}')
+        pass "/$p mounted fs=$fs source=$src"
+    else
+        if [ "$p" = "cache" ]; then
+            info "/cache not-mounted"
+        else
+            failf "/$p not-mounted"
+        fi
+    fi
+done
+
+out ""
+out "[DATA SPACE]"
+df -h /data 2>/dev/null | tee -a "$LOG"
+
+out ""
+out "[SUPER]"
+S=$(readlink -f /dev/block/by-name/super 2>/dev/null)
+if [ -n "$S" ] && [ -e "$S" ]; then
+    b=$(basename "$S")
+    sec=$(cat "/sys/class/block/$b/size" 2>/dev/null)
+    [ -n "$sec" ] || sec=0
+    if [ "$sec" -gt 0 ] 2>/dev/null; then
+        mib=$((sec/2048))
+        gib=$((sec/2097152))
+        pass "super node=$S size=${mib}MiB approx=${gib}GiB sectors=$sec"
+    else
+        failf "super zero-or-unreadable sectors"
+    fi
+else
+    failf "super missing"
+fi
+
+out ""
+out "[LOGICAL PARTITIONS]"
+for p in system system_ext product vendor odm mi_ext system_dlkm vendor_dlkm odm_dlkm; do
+    n="/dev/block/mapper/${p}${slot}"
+    [ -e "$n" ] || n="/dev/block/mapper/$p"
+    if [ -e "$n" ]; then
+        r=$(readlink -f "$n")
+        b=$(basename "$r")
+        sec=$(cat "/sys/class/block/$b/size" 2>/dev/null)
+        [ -n "$sec" ] || sec=0
+        bytes=$((sec*512))
+        kib=$((bytes/1024))
+        mib=$((bytes/1048576))
+        mnt=$(awk -v p="$p" '$1==p {print $2; exit}' /etc/recovery.fstab 2>/dev/null)
+        if [ -n "$mnt" ] && mount | grep -q " on $mnt "; then
+            state=mounted
+        else
+            state=idle
+        fi
+        if [ "$sec" -eq 0 ] 2>/dev/null; then
+            failf "$p mapper=$b ZERO-SIZE"
+        elif [ "$bytes" -lt 1048576 ] 2>/dev/null; then
+            info "$p mapper=$b size=${kib}KiB state=$state placeholder-like"
+        else
+            pass "$p mapper=$b size=${mib}MiB state=$state"
+        fi
+    else
+        failf "$p mapper-missing"
+    fi
+done
+
+out ""
+out "[SERIOUS STORAGE ERRORS]"
+err=$(grep -Ei 'I/O error|Buffer I/O error|EXT4-fs.*error|F2FS-fs.*error|blk_update_request|device-mapper.*error' /tmp/recovery.log 2>/dev/null | tail -n 15)
+if [ -n "$err" ]; then
+    echo "$err" | tee -a "$LOG"
+    warnf "serious-storage-errors-found"
+else
+    pass "no-serious-storage-errors"
+fi
+
+out ""
+out "[SUMMARY]"
+out "fails=$fail warnings=$warn"
+if [ "$fail" -eq 0 ] && [ "$warn" -eq 0 ]; then
+    out "OVERALL: HEALTHY"
+elif [ "$fail" -eq 0 ]; then
+    out "OVERALL: HEALTHY WITH WARNINGS"
+else
+    out "OVERALL: ATTENTION REQUIRED"
+fi
+out "=== END STORAGE HEALTH V3 ==="
+exit 0

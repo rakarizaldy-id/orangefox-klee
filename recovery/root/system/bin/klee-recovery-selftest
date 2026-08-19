@@ -1,0 +1,206 @@
+#!/system/bin/sh
+# Klee Recovery Self-Test V4
+# Build40 UI backend. Read-only diagnostics.
+# IMPORTANT: no "twrp xset" here. The OrangeFox ftls action imports
+# these files into DataManager only after the cmd operation has completed.
+
+LOG=/tmp/klee-selftest.log
+V=/tmp/klee-selftest-vars
+rm -rf "$V"
+mkdir -p "$V" || exit 2
+: > "$LOG" || exit 3
+
+fail=0
+warn=0
+
+put() { printf '%s\n' "$2" > "$V/$1"; }
+out() { echo "$*" | tee -a "$LOG"; }
+pass() { out "PASS $*"; }
+info() { out "INFO $*"; }
+warnf() { out "WARN $*"; warn=$((warn+1)); }
+failf() { out "FAIL $*"; fail=$((fail+1)); }
+
+out "=== KLEE RECOVERY SELF-TEST V4 ==="
+
+# DEVICE
+d=$(getprop ro.product.device)
+slot=$(getprop ro.boot.slot_suffix)
+if [ "$d" = "klee" ]; then
+    put device "PASS - klee ${slot:-?}"
+    pass "device=klee slot=${slot:-?}"
+else
+    put device "FAIL - ${d:-unknown}"
+    failf "device=${d:-unknown}"
+fi
+
+# DECRYPT
+dec=$(getprop twrp.decrypt.done)
+if [ "$dec" = "true" ]; then
+    put decrypt "PASS - decrypted"
+    pass "decrypt=true"
+else
+    put decrypt "INFO - encrypted"
+    info "decrypt=${dec:-false}"
+fi
+
+# CORE PARTITIONS
+if mount | grep -q " on /metadata "; then
+    put metadata "PASS - mounted"
+    pass "/metadata mounted"
+else
+    put metadata "FAIL - not mounted"
+    failf "/metadata not-mounted"
+fi
+
+if mount | grep -q " on /data "; then
+    put data "PASS - mounted"
+    pass "/data mounted"
+else
+    put data "FAIL - not mounted"
+    failf "/data not-mounted"
+fi
+
+# DYNAMIC PARTITIONS
+for p in vendor odm; do
+    mp=$(ls /dev/block/mapper/${p}* 2>/dev/null | head -n 1)
+    if [ -n "$mp" ]; then
+        if mount | grep -q " on /$p "; then
+            put "$p" "PASS - mounted"
+            pass "/$p available,mounted"
+        else
+            put "$p" "PASS - ready/idle"
+            pass "/$p available,idle"
+        fi
+    else
+        put "$p" "FAIL - mapper missing"
+        failf "/$p mapper-missing"
+    fi
+done
+
+# SETTINGS
+settings_ok=1
+for f in /data/media/0/Fox/.foxs /metadata/Fox/.foxs /data/recovery/Fox/.foxs /persist/.foxs; do
+    if [ -s "$f" ]; then
+        fmt=$(/system/bin/foxs-merge --probe "$f" 2>/dev/null)
+        if [ "$fmt" = "versioned" ]; then
+            pass "$f versioned"
+        else
+            settings_ok=0
+            failf "$f format=${fmt:-invalid}"
+        fi
+    else
+        settings_ok=0
+        failf "$f missing"
+    fi
+done
+if [ "$settings_ok" = "1" ]; then
+    put settings "PASS - profiles versioned"
+else
+    put settings "FAIL - profile issue"
+fi
+
+# HAPTIC
+H=/sys/bus/i2c/devices/0-005a
+if [ -d "$H" ]; then
+    eid=$(cat "$H/effect_id" 2>/dev/null | tr -dc '0-9')
+    am=$(cat "$H/activate_mode" 2>/dev/null | tr -dc '0-9')
+    gain=$(cat "$H/gain" 2>/dev/null)
+    if [ "$eid" = "11" ] && [ "$am" = "3" ] && [ "$gain" = "0x80" ]; then
+        put haptic "PASS - AW86927 11/3/0x80"
+        pass "AW86927 effect11/mode3/gain0x80"
+    else
+        put haptic "WARN - AW86927 ${eid:-?}/${am:-?}/${gain:-?}"
+        warnf "AW86927 effect=${eid:-?} mode=${am:-?} gain=${gain:-?}"
+    fi
+else
+    put haptic "FAIL - AW86927 missing"
+    failf "AW86927 missing"
+fi
+
+# TOUCH
+touch=""
+for e in /sys/class/input/event*; do
+    n=$(cat "$e/device/name" 2>/dev/null)
+    echo "$n" | grep -qi touch && touch="$n"
+done
+if [ -n "$touch" ]; then
+    put touch "PASS - $touch"
+    pass "touchscreen=$touch"
+else
+    put touch "FAIL - missing"
+    failf "touchscreen-missing"
+fi
+
+# DISPLAY
+D=/sys/class/drm/card0-DSI-1
+if [ -d "$D" ]; then
+    b=$(cat /sys/class/leds/lcd-backlight/brightness 2>/dev/null)
+    mb=$(cat /sys/class/leds/lcd-backlight/max_brightness 2>/dev/null)
+    put display "PASS - DSI ${b:-?}/${mb:-?}"
+    pass "DSI connector brightness=${b:-?}/${mb:-?}"
+else
+    put display "FAIL - DSI missing"
+    failf "DSI-connector-missing"
+fi
+
+# FASTBOOTD
+s=$(getprop init.svc.vendor.fastboot-default)
+if [ "$s" = "running" ]; then
+    put fastbootd "PASS - running"
+    pass "fastbootd=running"
+else
+    put fastbootd "READY - idle"
+    info "fastbootd=ready,idle"
+fi
+
+# THERMAL
+t=$(cat /sys/class/power_supply/battery/temp 2>/dev/null)
+if [ -n "$t" ]; then
+    tc=$((t/10))
+    td=$((t%10))
+    temp="${tc}.${td}C"
+    if [ "$t" -lt 450 ]; then
+        put thermal "PASS - $temp"
+        pass "battery=$temp"
+    elif [ "$t" -lt 500 ]; then
+        put thermal "WARN - $temp"
+        warnf "battery=$temp"
+    else
+        put thermal "FAIL - $temp"
+        failf "battery=$temp"
+    fi
+else
+    put thermal "WARN - unavailable"
+    warnf "battery-temp-unavailable"
+fi
+
+# SYNC
+sync_ok=1
+grep -q 'FoxSettingsSyncV8: post-decrypt hook complete' /tmp/recovery.log || sync_ok=0
+grep -q 'KleeFoxProfileSyncV2:' /tmp/recovery.log || sync_ok=0
+if [ "$sync_ok" = "1" ]; then
+    put sync "PASS - V8 + ProfileSyncV2"
+    pass "settings sync healthy"
+else
+    put sync "WARN - incomplete"
+    warnf "settings sync incomplete"
+fi
+
+put fail_count "$fail"
+put warn_count "$warn"
+if [ "$fail" -eq 0 ]; then
+    if [ "$warn" -eq 0 ]; then
+        put overall "HEALTHY"
+        out "OVERALL: HEALTHY"
+    else
+        put overall "HEALTHY - ${warn} warning(s)"
+        out "OVERALL: HEALTHY WITH WARNINGS"
+    fi
+else
+    put overall "ATTENTION REQUIRED"
+    out "OVERALL: ATTENTION REQUIRED"
+fi
+
+out "fails=$fail warnings=$warn"
+out "=== END SELF-TEST V4 ==="
+exit 0

@@ -1,0 +1,28 @@
+STEP15 FINAL CONFIG STATIC SELF-TEST
+
+Build60 first API                     PASS (34)
+64-bit-only product ABI               PASS
+Build60 CPU variant                   PASS (cortex-a55)
+Build60 A/B partition list            PASS (35 entries)
+Virtual A/B compression               PASS
+BOARD_KERNEL_CMDLINE vendor_boot path PASS
+screen 1268x2756                      PASS
+pixel RGBX_8888                       PASS
+brightness max 16383                  PASS
+FBE fscrypt policy v2                 PASS
+custom USB init retained              PASS
+fastbootd                             PASS
+OrangeFox LPTools current flag        PASS
+OrangeFox DMCTL current flag          PASS
+OrangeFox early settings load         PASS
+BOARD_AVB_ENABLE absent               PASS
+fabricated super group absent         PASS
+stale vendor-module loader absent     PASS
+init.recovery.bootctl.rc golden       PASS
+MTK boot-control blob mapped          PASS
+first-stage AVB flags absent          PASS
+ODM EBUSY core shim tracked Step16    PASS
+
+bootctl_rc_sha256=0c080fa1b90f09686c7359702cdb09619bbe8c6e506ac89e9a2e78b27d795545
+boot_service_sha256=f57bb53de563c5ca40839a157742abd0d67d8178a6009efa5e46dd8d8bd9638d
+odm_ebusy_shim_sha256=c392dbda3f24516948c343153d2c05ce0df6756178760bf42d207bc1b3cb4bb7

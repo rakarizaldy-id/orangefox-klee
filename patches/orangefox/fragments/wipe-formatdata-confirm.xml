@@ -1,0 +1,22 @@
+		<page name="formatdata_confirm">
+			<action>
+				<condition var1="tw_confirm_formatdata" var2="yes"/>
+				<action function="set">tw_back=formatdata</action>
+				<!-- KleeWipePrepV3 (Build52): prepare first, then Format Data as action2. -->
+				<action function="set">tw_action=cmd</action>
+				<action function="set">tw_action_param=/system/bin/klee-wipe-prep 'DATAMEDIA' ''</action>
+				<action function="set">tw_has_action2=1</action>
+				<action function="set">tw_action2=wipe</action>
+				<action function="set">tw_action2_param=DATAMEDIA</action>
+				<action function="set">tw_action_text1={@factory_reset_hdr}</action>
+				<action function="set">tw_action_text2={@formatting_data}</action>
+				<action function="set">tw_complete_text1={@format_data_complete}</action>
+				<action function="set">klee_wipe_queue_done=0</action>
+				<action function="page">wipe_action_page</action>
+			</action>
+
+			<action>
+				<condition var1="tw_confirm_formatdata" op="!=" var2="yes"/>
+				<action function="page">formatdata</action>
+			</action>
+		</page>

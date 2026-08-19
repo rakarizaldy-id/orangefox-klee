@@ -1,0 +1,14 @@
+// SPDX-License-Identifier: Apache-2.0
+
+cc_binary {
+    name: "aw86927_ff_constant_prime_noplay",
+    srcs: ["aw86927_ff_constant_prime_noplay.c"],
+    recovery: true,
+    static_executable: true,
+    stl: "none",
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+    ],
+}

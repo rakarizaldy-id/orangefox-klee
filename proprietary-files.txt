@@ -1,0 +1,55 @@
+#
+# POCO X8 Pro (klee) recovery proprietary inputs
+#
+# Build60 GOLDEN is the behavioral/file-layout authority for this list.
+# Source ROM path provenance is verified progressively against stock HyperOS.
+#
+# Do not add generic AOSP/OrangeFox outputs here.
+#
+
+# MTK Boot Control
+vendor/bin/hw/android.hardware.boot-service.mtk
+
+# MiTEE / recovery security services
+vendor/bin/tee-supplicant
+vendor/bin/hw/android.hardware.gatekeeper-service.mitee
+vendor/bin/hw/android.hardware.security.keymint@3.0-service.mitee
+vendor/bin/hw/vendor.xiaomi.hardware.secure_element-service
+
+# Weaver backends
+vendor/bin/hw/android.hardware.weaver-service.nxp
+vendor/bin/hw/android.hardware.weaver
+vendor/bin/hw/vendor.xiaomi.hardware.authsecretd
+
+# Secure Element / Weaver interface and support libraries
+vendor/lib64/android.hardware.secure_element-V1-ndk.so
+vendor/lib64/android.hardware.secure_element@1.0.so
+vendor/lib64/android.hardware.secure_element@1.1.so
+vendor/lib64/android.hardware.secure_element@1.2.so
+vendor/lib64/android.hardware.weaver-V2-ndk.so
+vendor/lib64/android.se.omapi-V1-ndk.so
+vendor/lib64/ese_weaver.nxp.so
+vendor/lib64/libjc_keymint_transport.nxp.so
+vendor/lib64/libmigpese@2.0.so
+vendor/lib64/libteecli.so
+vendor/lib64/vendor.xiaomi.hardware.aidl.mtdservice-V1-ndk.so
+vendor/lib64/vendor.xiaomi.hardware.cpace-V1-ndk.so
+vendor/lib64/vendor.xiaomi.hardware.miauthsecretd-V1-ndk.so
+vendor/lib64/libclang_rt.ubsan_standalone-aarch64-android.so
+vendor/lib64/libmisight.so
+
+# HyperOS C++ compatibility runtime used by CN/Weaver path
+system/lib64/libc++_hos.so
+
+# MiTEE trusted applications used by the recovery security stack
+vendor/mitee/ta/2e8fade5-0c7a-46cc-810e6468baee66b9.ta
+vendor/mitee/ta/4d573443-6a56-4272-ac6f2425af9ef9bb.ta
+vendor/mitee/ta/8aaaf201-2460-0010-aabbccdd00000006.ta
+vendor/mitee/ta/dba51a17-0563-11e7-93b16fa7b0071a51.ta
+
+# Touch report userspace
+vendor/bin/touch_report
+vendor/lib64/libtouchreport.so
+vendor/lib64/libtouchreport_alg.so
+vendor/lib64/libtouchreport_hal.so
+vendor/lib64/libtouchreport_sensor.so

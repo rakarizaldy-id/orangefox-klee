@@ -1,0 +1,25 @@
+# Android/OrangeFox build output
+out/
+*.img
+*.zip
+*.cpio
+*.lz4
+*.log
+
+# Generated device hardware inputs
+prebuilt/generated/*
+!prebuilt/generated/.gitignore
+
+# Extracted Xiaomi/vendor proprietary files
+proprietary/
+vendor/xiaomi/klee/proprietary/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

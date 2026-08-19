@@ -1,0 +1,53 @@
+// SPDX-License-Identifier: Apache-2.0
+
+cc_library_shared {
+    name: "libklee_libcxx_compat",
+    srcs: ["libcxx_compat.cpp"],
+    compile_multilib: "64",
+    recovery_available: true,
+    stl: "none",
+    shared_libs: ["liblog"],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+    ],
+}
+
+cc_binary {
+    name: "klee_omapi_bridge",
+    recovery: true,
+    cpp_std: "c++17",
+    srcs: ["omapi_bridge.cpp"],
+    generated_headers: [
+        "android.hardware.secure_element-V1-ndk-source",
+        "android.se.omapi-V1-ndk-source",
+    ],
+    shared_libs: [
+        // Defined by the later proprietary extraction layer. Build60 linked
+        // the vendor V1 NDK implementations while compiling against generated
+        // AIDL headers from the source tree.
+        "klee_android.hardware.secure_element-V1-ndk",
+        "klee_android.se.omapi-V1-ndk",
+        "libklee_libcxx_compat",
+        "libbase",
+        "libbinder_ndk",
+        "liblog",
+    ],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+    ],
+}
+
+cc_test_host {
+    name: "klee_omapi_protocol_test",
+    srcs: ["omapi_protocol_test.cpp"],
+    cpp_std: "c++17",
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+    ],
+}

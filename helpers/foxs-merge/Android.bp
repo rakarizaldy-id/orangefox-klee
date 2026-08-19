@@ -1,0 +1,16 @@
+// SPDX-License-Identifier: Apache-2.0
+
+cc_binary {
+    name: "foxs-merge",
+    srcs: ["foxs_merge_v2.c"],
+
+    recovery: true,
+    static_executable: true,
+    stl: "none",
+
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+    ],
+}

@@ -1,0 +1,118 @@
+STEP17 STATIC SELF-TEST
+
+DEVICE-ONLY PREFLIGHT:
+KLEE CLEAN BUILD PREFLIGHT
+source_root=/
+device_dir=/mnt/data/klee-device-tree-step17-build-preflight
+mode=device-only
+
+PASS  AndroidProducts.mk
+PASS  BoardConfig.mk
+PASS  device.mk
+PASS  twrp_klee.mk
+PASS  vendorsetup.sh
+PASS  proprietary-files.txt
+PASS  recovery-proprietary.mk
+PASS  recovery/root/init.recovery.mt6899.rc
+PASS  recovery/root/init.recovery.project.rc
+PASS  recovery/root/init.recovery.usb.rc
+PASS  recovery/root/init.recovery.keymint.rc
+PASS  recovery/root/init.recovery.bootctl.rc
+PASS  recovery/root/first_stage_ramdisk/fstab.mt6899
+PASS  recovery/root/system/etc/recovery.fstab
+PASS  patches/orangefox/apply-klee-ramdisk.py
+PASS  patches/twrp/twrp-wrapper.sh
+PASS  tools/fox-callback.sh
+PASS  tools/apply-klee-source-patches.py
+PASS  tools/prepare-klee-stock-inputs.py
+PASS  tools/repack-klee-vendor-boot.py
+PASS  helpers/aw86927/Android.bp
+PASS  helpers/aw86927/aw86927_ff_constant_prime_noplay.c
+PASS  helpers/foxs-merge/Android.bp
+PASS  helpers/foxs-merge/foxs_merge_v2.c
+PASS  helpers/omapi-bridge/Android.bp
+PASS  helpers/omapi-bridge/omapi_bridge.cpp
+PASS  helpers/omapi-bridge/libcxx_compat.cpp
+PASS  forbidden config absent: BOARD_AVB_ENABLE := true
+PASS  forbidden config absent: TW_LOAD_VENDOR_BOOT_MODULES :=
+PASS  forbidden config absent: TW_LOAD_VENDOR_MODULES :=
+PASS  forbidden config absent: TW_INCLUDE_LPDUMP := true
+PASS  forbidden config absent: PRODUCT_TARGET_VNDK_VERSION := 36
+PASS  invariant: PRODUCT_SHIPPING_API_LEVEL := 34
+PASS  invariant: core_64_bit_only.mk
+PASS  invariant: TW_MAX_BRIGHTNESS := 16383
+PASS  invariant: TARGET_RECOVERY_PIXEL_FORMAT := RGBX_8888
+PASS  invariant: FOX_VENDOR_BOOT_RECOVERY=1
+PASS  invariant: FOX_LOCAL_CALLBACK_SCRIPT=
+PASS  invariant: OF_ENABLE_LPTOOLS=1
+PASS  invariant: OF_USE_DMCTL=1
+PASS  first-stage fstab keeps project no-AVB fs_mgr policy
+WARN  ALLOW_MISSING_DEPENDENCIES is still enabled for first clean build; remove after dependencies resolve
+
+KLEE PREFLIGHT: PASS
+
+FAKE FULL PREFLIGHT:
+KLEE CLEAN BUILD PREFLIGHT
+source_root=/tmp/klee-step17-dsvgz0fu
+device_dir=/tmp/klee-step17-dsvgz0fu/device/xiaomi/klee
+mode=full
+
+PASS  AndroidProducts.mk
+PASS  BoardConfig.mk
+PASS  device.mk
+PASS  twrp_klee.mk
+PASS  vendorsetup.sh
+PASS  proprietary-files.txt
+PASS  recovery-proprietary.mk
+PASS  recovery/root/init.recovery.mt6899.rc
+PASS  recovery/root/init.recovery.project.rc
+PASS  recovery/root/init.recovery.usb.rc
+PASS  recovery/root/init.recovery.keymint.rc
+PASS  recovery/root/init.recovery.bootctl.rc
+PASS  recovery/root/first_stage_ramdisk/fstab.mt6899
+PASS  recovery/root/system/etc/recovery.fstab
+PASS  patches/orangefox/apply-klee-ramdisk.py
+PASS  patches/twrp/twrp-wrapper.sh
+PASS  tools/fox-callback.sh
+PASS  tools/apply-klee-source-patches.py
+PASS  tools/prepare-klee-stock-inputs.py
+PASS  tools/repack-klee-vendor-boot.py
+PASS  helpers/aw86927/Android.bp
+PASS  helpers/aw86927/aw86927_ff_constant_prime_noplay.c
+PASS  helpers/foxs-merge/Android.bp
+PASS  helpers/foxs-merge/foxs_merge_v2.c
+PASS  helpers/omapi-bridge/Android.bp
+PASS  helpers/omapi-bridge/omapi_bridge.cpp
+PASS  helpers/omapi-bridge/libcxx_compat.cpp
+PASS  forbidden config absent: BOARD_AVB_ENABLE := true
+PASS  forbidden config absent: TW_LOAD_VENDOR_BOOT_MODULES :=
+PASS  forbidden config absent: TW_LOAD_VENDOR_MODULES :=
+PASS  forbidden config absent: TW_INCLUDE_LPDUMP := true
+PASS  forbidden config absent: PRODUCT_TARGET_VNDK_VERSION := 36
+PASS  invariant: PRODUCT_SHIPPING_API_LEVEL := 34
+PASS  invariant: core_64_bit_only.mk
+PASS  invariant: TW_MAX_BRIGHTNESS := 16383
+PASS  invariant: TARGET_RECOVERY_PIXEL_FORMAT := RGBX_8888
+PASS  invariant: FOX_VENDOR_BOOT_RECOVERY=1
+PASS  invariant: FOX_LOCAL_CALLBACK_SCRIPT=
+PASS  invariant: OF_ENABLE_LPTOOLS=1
+PASS  invariant: OF_USE_DMCTL=1
+PASS  first-stage fstab keeps project no-AVB fs_mgr policy
+WARN  ALLOW_MISSING_DEPENDENCIES is still enabled for first clean build; remove after dependencies resolve
+PASS  generated hardware input: prebuilt/generated/platform-vendor-ramdisk.cpio.lz4
+PASS  generated hardware input: prebuilt/generated/mt6899-klee.dtb
+PASS  generated hardware input: prebuilt/generated/dtbo.img
+PASS  generated hardware input: prebuilt/generated/stock-input-report.txt
+PASS  stock input report: platform_build60_match=True
+PASS  stock input report: dtb_build60_match=True
+PASS  source: build/envsetup.sh
+PASS  source: bootable/recovery/variables.h
+PASS  source: bootable/recovery/partition.cpp
+PASS  source: vendor/recovery
+PASS  OrangeFox core source patches applied
+PASS  generated vendor repo exists: vendor/xiaomi/klee
+PASS  all 33 proprietary inputs exist
+PASS  generated private module: klee_android.hardware.secure_element-V1-ndk
+PASS  generated private module: klee_android.se.omapi-V1-ndk
+
+KLEE PREFLIGHT: PASS

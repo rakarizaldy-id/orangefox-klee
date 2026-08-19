@@ -1,0 +1,69 @@
+		<page name="wipe_action_page">
+			<template name="base_console_cancel"/>
+
+			<text style="text_ab_title">
+				<placement x="%col1_x_indent%" y="%ab_bc_y%"/>
+				<text>{@wipe_hdr}</text>
+			</text>
+
+			<text style="text_ab_title">
+				<placement x="%col1_x%" y="%row1_2_y%" placement="2"/>
+				<text>%tw_action_text1%</text>
+			</text>
+
+			<text style="text_ab_subtitle">
+				<placement x="%col1_x%" y="%row1_2_y%"/>
+				<text>%tw_action_text2%</text>
+			</text>
+
+			<action>
+				<condition var1="tw_operation_state" var2="1"/>
+				<condition var1="klee_wipe_queue_done" var2="1"/>
+				<condition var1="tw_busy" var2="0"/>
+				<action function="page">wipe_action_complete</action>
+			</action>
+
+			<action>
+				<condition var1="tw_operation_state" var2="1"/>
+				<condition var1="klee_wipe_queue_done" var2="1"/>
+				<condition var1="tw_busy" var2="0"/>
+				<action function="page">wipe_action_complete</action>
+			</action>
+
+
+			<action>
+				<condition var1="tw_has_action2" var2="0"/>
+				<action function="%tw_action%">%tw_action_param%</action>
+				<action function="set">klee_wipe_queue_done=1</action>
+			</action>
+
+			<!-- Build58: Advanced Wipe LIST stays in one worker: PRE -> WIPE -> POSTLIST. -->
+			<action>
+				<condition var1="tw_has_action2" var2="1"/>
+				<condition var1="tw_action2_param" var2="LIST"/>
+				<action function="%tw_action%">%tw_action_param%</action>
+				<action function="%tw_action2%">%tw_action2_param%</action>
+				<action function="cmd">/system/bin/klee-wipe-prep 'POSTLIST' '%tw_wipe_list%'</action>
+				<action function="set">klee_wipe_queue_done=1</action>
+			</action>
+
+			<!-- Build60: Format Data stays in one worker: PRE -> DATAMEDIA -> POSTDATAMEDIA. -->
+			<action>
+				<condition var1="tw_has_action2" var2="1"/>
+				<condition var1="tw_action2_param" var2="DATAMEDIA"/>
+				<action function="%tw_action%">%tw_action_param%</action>
+				<action function="%tw_action2%">%tw_action2_param%</action>
+				<action function="cmd">/system/bin/klee-wipe-prep 'POSTDATAMEDIA' ''</action>
+				<action function="set">klee_wipe_queue_done=1</action>
+			</action>
+
+			<!-- Other non-LIST two-action paths remain byte-semantically PRE -> action2 only. -->
+			<action>
+				<condition var1="tw_has_action2" var2="1"/>
+				<condition var1="tw_action2_param" op="!=" var2="LIST"/>
+				<condition var1="tw_action2_param" op="!=" var2="DATAMEDIA"/>
+				<action function="%tw_action%">%tw_action_param%</action>
+				<action function="%tw_action2%">%tw_action2_param%</action>
+				<action function="set">klee_wipe_queue_done=1</action>
+			</action>
+		</page>

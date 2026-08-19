@@ -1,0 +1,4 @@
+				<listitem name="Klee Tools">
+					<icon res="build"/>
+					<action function="page">klee_tools</action>
+				</listitem>

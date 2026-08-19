@@ -5,6 +5,18 @@ Unofficial **OrangeFox R12.0** recovery project for the **POCO X8 Pro (`klee`)**
 > [!NOTE]
 > This repository is the independent `klee` release and development channel maintained by RakaRizaldy. It is not presented as, affiliated with, or maintained on behalf of any previous unofficial maintainer or previous unofficial release channel. Upstream OrangeFox/source attribution and licensing remain separate and will be preserved where applicable.
 
+## Source tree status
+
+```text
+Build status: PASS by reconstruction/preflight
+Clean-source rebuild: verification deferred
+```
+
+This repository now contains the independently reconstructed `klee` device
+tree and build tooling derived from the validated Build60 recovery baseline.
+The Build60 binary/runtime validation and the clean-source rebuild status are
+tracked separately; see **[SOURCE-STATUS.md](SOURCE-STATUS.md)**.
+
 > [!WARNING]
 > This is an unofficial recovery project for an unlocked device. Flashing recovery, boot-chain partitions, dynamic partitions, or running Format Data can cause data loss or an unbootable device if used incorrectly. Make a backup and verify that your device is `klee` before flashing.
 
@@ -84,6 +96,9 @@ See **[TEST_MATRIX.md](TEST_MATRIX.md)** for the detailed validation matrix.
 - **[TEST_MATRIX.md](TEST_MATRIX.md)** — runtime validation status.
 - **[CHANGELOG-FULL-CHAT1-TO-CHAT9.md](CHANGELOG-FULL-CHAT1-TO-CHAT9.md)** — full preserved project chronology.
 - **[SOURCE-PROVENANCE.md](SOURCE-PROVENANCE.md)** — history reconstruction notes.
+- **[SOURCE-STATUS.md](SOURCE-STATUS.md)** — reconstruction/preflight status and clean-build boundary.
+- **[BUILDING.md](BUILDING.md)** — source preparation and build workflow.
+- **[docs/reconstruction/](docs/reconstruction/)** — Step3–Step17 reconstruction proofs and audit records.
 
 ## Project identity
 
