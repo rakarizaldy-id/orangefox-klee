@@ -27,6 +27,7 @@ SHA256:
 
 ```text
 aa7fdc2ebc9f30ecbeaf18a6d982fd86de782600bdd30adf676a17c22e4d0251
+```
 
 [Download OrangeFox R12.0 Build60 FINAL](https://github.com/rakarizaldy-id/orangefox-klee/releases/tag/R12.0-Build60)
 
@@ -53,6 +54,7 @@ Recovery is installed to `vendor_boot`.
 ```bash
 fastboot flash vendor_boot OrangeFox-R12.0-Unofficial-klee-RakaRizaldy-Fenrir-Build60-20260819-FINAL-MASTER-RELEASE.img
 fastboot reboot recovery
+```
 
 
 For first conversion to Fenrir:
