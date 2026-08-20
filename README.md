@@ -32,16 +32,6 @@ SHA256:
 5740bd9c17e92d32e4dc24b02792a5c8aa54df94ad5233c1370af995269bcaf2
 ```
 
-### Release package
-
-`OrangeFox-R12.0-Unofficial-klee-Fenrir-20260820.zip`
-
-SHA256:
-
-```text
-3f2202b04822ebdfab42b6d2a8219af04316caa2c26fafab7e43bfe6d63461f1
-```
-
 [Download OrangeFox R12.0 for klee](https://github.com/rakarizaldy-id/orangefox-klee/releases/tag/OrangeFox-R12.0-klee-20260820)
 
 ## Features
