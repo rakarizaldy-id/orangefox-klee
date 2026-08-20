@@ -38,7 +38,7 @@ SHA256:
 
 - Android 16 FBE decryption
 - KeyMint / Weaver / AuthSecret integration
-- IDXM and Pure CN decryption support
+- Global ID, China, HyperOS Mod decryption support
 - Stable encrypted ↔ decrypted recovery settings lifecycle
 - Recovery Password support
 - Persistent theme, accent and navigation settings
