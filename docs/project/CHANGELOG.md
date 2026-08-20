@@ -1,7 +1,7 @@
 # Changelog — OrangeFox R12.0 Unofficial for POCO X8 Pro (`klee`)
 
-This is the public/user-facing changelog. For the complete experimental chronology, including rejected
-builds and root-cause work, see `CHANGELOG-FULL-CHAT1-TO-CHAT9.md` and `TECHNICAL-HISTORY.md`.
+This is the public/user-facing changelog. For deeper development history and root-cause work, see
+[Build History](BUILD-HISTORY.md) and [Technical History](TECHNICAL-HISTORY.md).
 
 ## 2026-08-20 — OrangeFox R12.0
 
@@ -18,29 +18,28 @@ builds and root-cause work, see `CHANGELOG-FULL-CHAT1-TO-CHAT9.md` and `TECHNICA
 - Safe saved-log cleanup without truncating `/tmp/recovery.log`.
 - Recovery UI race and soft-restart fixes.
 
-
-## Build60 — 19 August 2026 — FINAL
+## Build60 — 19 August 2026 — Historical Golden Baseline
 
 ### Format Data touch lifecycle
 - Fixed touch becoming unusable after a successful Format Data in the same recovery session.
-- Retains Build59 automatic `touch_report` quiesce before dynamic SUPER unmap.
+- Retains automatic `touch_report` quiesce before dynamic SUPER unmap.
 - Added guarded `POSTDATAMEDIA` resume after native Format Data.
-- Touch now returns automatically without recovery reboot and without remounting ODM.
+- Touch returns automatically without recovery reboot and without remounting ODM.
 - Repeated Format Data and post-System regression tests passed.
 
 ### Retained wipe/FBE safety
-- Advanced Wipe Data keeps the Build58 single-worker `PRE -> WIPE -> POSTLIST` architecture.
+- Advanced Wipe Data keeps the validated single-worker `PRE -> WIPE -> POSTLIST` architecture.
 - Android 16 FBE parent-directory repair after preserve-media Data wipe retained.
 - `.foxs` profile recovery/persistence architecture retained.
-- Format Data dynamic-unmap preparation from Build59 retained.
+- Format Data dynamic-unmap preparation retained.
 
 ### Fenrir
-- Fenrir Install / Repair retained byte-identically from the validated architecture.
-- Upgrade-safe vendor_boot cache handling prevents old valid cache from downgrading a newly flashed recovery.
+- Fenrir Install / Repair retained the validated bootchain/recovery synchronization architecture.
+- Upgrade-safe `vendor_boot` cache handling prevents an old valid cache from downgrading a newer recovery.
 - FBE-locked state remains fail-closed.
-- Final project rule: non-Fenrir HOS -> Fenrir Install / Repair -> **Format Data required** -> Reboot System.
+- Project rule: non-Fenrir HOS -> Fenrir Install / Repair -> **Format Data required** -> Reboot System.
 
-## Major milestones inherited by Build60
+## Major milestones inherited from the historical baseline
 
 ### Universal Android 16 FBE
 - IDXM `OS3.0.303.0.WPJIDXM`: NXP Weaver + Xiaomi MIAuthSecret path, directly validated.
@@ -67,8 +66,8 @@ builds and root-cause work, see `CHANGELOG-FULL-CHAT1-TO-CHAT9.md` and `TECHNICA
 ### Klee Tools
 - Recovery Self-Test.
 - Storage / Partition Health.
-- Clear OrangeFox Logs.
-- True in-memory GUI “Clear Console” remains parked/not implemented.
+- Clear Saved OrangeFox Logs.
+- True in-memory GUI console clearing remains parked/not implemented.
 
 ### Release identity
 - Native `[Branch] : klee`.

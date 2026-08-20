@@ -1,4 +1,4 @@
-# Technical History — OrangeFox `klee` project, Chat1 → Chat9
+# Technical History — OrangeFox `klee` Project
 
 ## 1. Platform foundation
 - Target: POCO X8 Pro `klee`, MT6899 family.
@@ -178,3 +178,65 @@ was packaged.
 - preserve known-good DTB/bootconfig/non-recovery fragments;
 - fail closed for destructive operations;
 - do not treat a GUI “Success” string as enough without log/state verification.
+
+## 14. Current release stabilization — 20 August 2026
+
+A later stabilization phase after the historical Build60 baseline focused on recovery state-management rather than reopening already-solved hardware subsystems.
+
+### Single settings authority
+
+The final runtime converged OrangeFox settings on:
+
+`/metadata/Fox/.foxs`
+
+During lifecycle transitions, persist/media/recovery paths may be bind aliases, but they are not intended to become independent authorities.
+
+Encrypted-state testing showed RAM values matching the metadata authority. After decrypt, the relevant `.foxs` aliases converged to the same inode/state.
+
+### Recovery Password and routing
+
+Custom threaded GUI hooks were removed from paths that raced native OrangeFox threaded actions.
+
+The validated runtime supports:
+
+- Android/FBE PIN -> Home/Back -> OrangeFox Recovery Password -> encrypted Main;
+- Android/FBE decrypt -> OrangeFox Recovery Password -> decrypted Main;
+- Recovery Password create/remove persistence.
+
+`/persist` must be writable after decrypt for native password persistence.
+
+### Theme and navigation persistence
+
+Theme style/accent and navigation state persist through tested reload/reboot paths.
+
+A lightweight runtime bridge keeps metadata and decrypted media copies aligned. This is intentionally not confused with requiring a full custom `/sdcard/Fox/theme/ui.zip`.
+
+### Clear Saved Logs
+
+The shipped cleanup tool removes saved OrangeFox logs but does not truncate the active `/tmp/recovery.log`.
+
+True in-memory GUI console clearing remains parked.
+
+### Fenrir current verification
+
+On an already-Fenrir device, the current runtime detected:
+
+- PRELOADER A/B: match;
+- LK A/B: match;
+- active `vendor_boot`: current recovery;
+- inactive `vendor_boot`: older recovery;
+- cache: stale.
+
+Fenrir refreshed the cache from the active recovery, repaired the inactive slot and verified final A/B equality.
+
+A direct rerun was status-only with all components MATCH/SKIP.
+
+This confirms that inactive-slot repair is not equivalent to a first non-Fenrir conversion and does not automatically require Format Data.
+
+### Display transition note
+
+Direct Fenrir verification kept brightness stable and did not reproduce the rare visual glitch.
+
+Earlier glitch evidence correlated with native brightness transitions around screen dim/off. The evidence therefore points to a native display timeout transition race rather than Fenrir partition I/O.
+
+The project does not patch Fenrir for this symptom without new regression evidence.

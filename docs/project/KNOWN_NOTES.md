@@ -1,33 +1,64 @@
 # Known Notes / Boundaries
 
-1. **Build60 post-Format Data touch loss is fixed.** A recovery reboot should not be documented as the
-   normal workaround. If it reappears, capture `/tmp/recovery.log` and treat it as regression evidence.
+1. **Current release identity is the image hash, not an internal development number.**
 
-2. **ODM need not be remounted to restore touch after Format Data.** Runtime proof showed
-   `touch_report` can restart while `/odm` and its mapper remain absent.
+   `OrangeFox-R12.0-Unofficial-klee-Fenrir-20260820.img`
 
-3. **Fenrir requires decrypted user 0.** The established fail-closed guard remains part of the design.
+   SHA256:
+   `5740bd9c17e92d32e4dc24b02792a5c8aa54df94ad5233c1370af995269bcaf2`
 
-4. **First non-Fenrir HOS -> Fenrir conversion requires Format Data.** This supersedes older project
-   notes where the clean conversion requirement was still pending/uncertain.
+2. **First true non-Fenrir -> Fenrir conversion requires Format Data before booting System.**
 
-5. **Format Data erases userdata-resident Fenrir cache.** It does not erase already-written preloader/LK/
-   vendor_boot partitions. A later decrypted Fenrir run can seed/synchronize cache from the active recovery.
+   Required sequence:
+   `Fenrir Install / Repair -> Format Data -> Reboot System`.
 
-6. **Other non-CN ROM regions are not individually claimed as tested.** Final selector routes them through
-   the validated non-CN NXP path, but direct user validation recorded in the history is IDXM and Pure CN.
+3. **An already-Fenrir device does not automatically require another Format Data.**
 
-7. **Clear Console is not shipped as a true in-memory console clear.** Clear OrangeFox Logs is implemented;
-   the RAM-backed GUI console problem was deliberately parked.
+   A status-only Fenrir verification or an inactive-slot `vendor_boot` repair is not a first conversion.
 
-8. **Thermal/load work was investigation, not a marketed final thermal feature.**
+4. **Fenrir destructive work requires decrypted user 0.**
 
-9. **HyperDot clean boot was validated to Android Setup Wizard.** The specific final ZIP test was not
-   completed through full account/setup to Home before the next project test.
+   The established FBE-locked guard is fail-closed.
 
-10. **Windows BAT Build60 test is separate/pending at package time.** Do not claim it as completed from this ZIP.
+5. **Settings use one runtime authority.**
 
-11. **Internal OrangeFox build-date metadata can reflect the inherited base build date.** Use the Build60
-   image SHA256 as the authoritative public artifact identity.
+   The authoritative settings file is `/metadata/Fox/.foxs`. Lifecycle aliases may appear at persist/media/recovery paths, but they are expected to converge to the same state rather than act as independent settings stores.
 
-12. **Do not reconstruct multi-sparse SUPER fragments with ordinary binary concatenation.**
+6. **Recovery Password and Android/FBE PIN are separate security layers.**
+
+   When Recovery Password is enabled, the expected flow can contain both the Android/FBE credential gate and the OrangeFox Recovery Password gate.
+
+7. **Theme/accent/navigation persistence is validated separately from a full custom `ui.zip`.**
+
+   Falling back to stock `/twres/ui.xml` when a custom theme package is absent does not mean style/accent persistence is broken.
+
+8. **Post-Format Data touch recovery is part of the validated architecture.**
+
+   A recovery reboot should not be documented as the normal workaround. If touch loss returns, capture runtime evidence and treat it as a regression.
+
+9. **A rare display glitch has been associated with native screen dim/off transitions, not Fenrir partition I/O.**
+
+   Direct Fenrir verification kept brightness stable and did not reproduce the glitch. Do not patch Fenrir for this symptom without new evidence.
+
+10. **Clear Saved OrangeFox Logs does not truncate the active `/tmp/recovery.log`.**
+
+    True in-memory GUI console clearing is not shipped and remains parked.
+
+11. **Direct firmware validation is recorded for IDXM and Pure CN.**
+
+    - `OS3.0.303.0.WPJIDXM`
+    - `OS3.0.304.0.WPJCNXM`
+
+    Other regions should not be advertised as individually runtime-tested without new evidence.
+
+12. **OrangeFox OTA / survival is intentionally unsupported for this unofficial release.**
+
+13. **Thermal/load work was diagnostic investigation, not a marketed recovery feature.**
+
+14. **Very large ROM ZIP transfer through recovery MTP showed corruption during testing.**
+
+    ADB push was the validated transfer path for multi-gigabyte ROM test packages.
+
+15. **The public source reconstruction and the current runtime release have different verification boundaries.**
+
+    The repository reconstruction is still anchored to the historical Build60 source/recovery behavior baseline. The current 2026-08-20 runtime image includes later stabilization work that has not yet been independently reproduced from a completely fresh source checkout.

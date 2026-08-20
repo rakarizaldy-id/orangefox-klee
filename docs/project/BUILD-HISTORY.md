@@ -1,4 +1,8 @@
-# Build History — Chat1 → Chat9
+# Build History — Development Timeline
+
+The detailed numbered timeline below documents the historical bring-up phase through the Build60 golden regression baseline.
+
+The current public release is newer than this table. Later stabilization work intentionally is not expanded into every internal nano-build number here; the user-facing state is documented in `CHANGELOG.md` and `TEST_MATRIX.md`.
 
 | Build | Focus | Key change | Final classification |
 |---|---|---|---|
@@ -56,6 +60,22 @@
 | 57 | tw_busy guard | Still raced ActionThread teardown | Rejected design |
 | 58 | Advanced Wipe closure | PRE -> WIPE -> POSTLIST same worker | FULL RUNTIME PASS |
 | 59 | Format Data ODM closure | Stop touch_report before DATAMEDIA dynamic unmap | FULL RUNTIME PASS; superseded by post-format touch issue |
-| 60 | Format Data touch closure | POSTDATAMEDIA guarded resume | FINAL / FULL REGRESSION PASS |
+| 60 | Format Data touch closure | POSTDATAMEDIA guarded resume | HISTORICAL GOLDEN / FULL REGRESSION PASS |
 
-Exact per-build numbering before Build6 was not preserved strongly enough to reconstruct without guessing; those earliest changes are therefore grouped under Foundation.
+Exact per-build numbering before Build6 was not preserved strongly enough to reconstruct without guessing; those earliest changes are grouped under Foundation.
+
+## Current release stabilization — 20 August 2026
+
+After the historical Build60 baseline, the project completed a later stabilization phase focused on:
+
+- one authoritative encrypted/decrypted OrangeFox settings store;
+- safe pre-decrypt aliases without touching `/data` during early metadata-encryption startup;
+- Recovery Password create/unlock/remove persistence;
+- safe Home/Back routing from the Android/FBE PIN page;
+- theme/accent/navigation persistence across reload and reboot;
+- removal of custom threaded GUI hooks that raced native OrangeFox actions;
+- safe Clear Saved Logs behavior without truncating the active recovery log;
+- Fenrir A/B `vendor_boot` verification/repair against the current running recovery;
+- runtime confirmation that the remaining rare visual glitch correlates with native screen dim/off transitions rather than Fenrir writes.
+
+The runtime result of that phase is the current 2026-08-20 release image documented in `README.md`.

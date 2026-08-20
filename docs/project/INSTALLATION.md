@@ -1,59 +1,99 @@
-# Installation / Operational Guide — Build60 FINAL
+# Installation / Operational Guide
 
-## Flash or update OrangeFox
-`klee` recovery lives in `vendor_boot`.
+This guide applies to the current **OrangeFox R12.0 — 2026-08-20** runtime release for POCO X8 Pro (`klee`).
 
-Typical active-slot fastboot flow:
+## Recovery image
+
+`OrangeFox-R12.0-Unofficial-klee-Fenrir-20260820.img`
+
+SHA256:
 
 ```text
-fastboot flash vendor_boot <Build60 image>
+5740bd9c17e92d32e4dc24b02792a5c8aa54df94ad5233c1370af995269bcaf2
+```
+
+## Flash or update OrangeFox
+
+`klee` recovery lives in `vendor_boot`.
+
+```bash
+fastboot flash vendor_boot OrangeFox-R12.0-Unofficial-klee-Fenrir-20260820.img
 fastboot reboot recovery
 ```
 
-Always confirm the device is `klee` and that the intended active slot is the one being operated on.
+Always confirm that the connected device is `klee` before flashing.
 
-## Existing Fenrir-compatible HOS
-1. Boot Build60.
+## Existing Fenrir device
+
+If the currently installed HOS is already Fenrir-compatible:
+
+1. Boot OrangeFox.
 2. Decrypt user 0 if requested.
-3. `Advanced -> Klee Tools -> Fenrir Install / Repair`.
-4. Confirm completion/ready.
-5. Continue normal ROM/recovery workflow.
+3. Open `Advanced -> Klee Tools -> Fenrir Install / Repair`.
+4. Allow the tool to verify the bootchain and both `vendor_boot` slots.
+5. If all components already match, the operation is status-only.
+6. If only the inactive `vendor_boot` slot requires repair, another Format Data is not automatically required.
 
-## Non-Fenrir HOS -> first Fenrir conversion
-This project requires:
+## First true non-Fenrir -> Fenrir conversion
 
-1. Boot Build60.
+The required project sequence is:
+
+```text
+Fenrir Install / Repair
+        ↓
+Format Data
+        ↓
+Reboot System
+```
+
+Detailed sequence:
+
+1. Boot OrangeFox.
 2. Decrypt user 0.
 3. Run `Fenrir Install / Repair`.
-4. Confirm Fenrir completes.
+4. Confirm that Fenrir reaches the ready state.
 5. **Format Data.**
 6. Reboot System.
 
-Official sequence:
-`non-Fenrir HOS -> Fenrir Install / Repair -> Format Data -> Reboot System`
+**Do not boot System between the first Fenrir conversion and Format Data.**
 
-Do not skip Format Data in this transition.
+## Format Data behavior
 
-## Format Data in Build60
-Expected internal sequence:
-`PRE -> native DATAMEDIA -> POSTDATAMEDIA`
+The validated recovery architecture uses:
 
-- PRE quiesces `touch_report` so ODM can be released.
+```text
+PRE -> native DATAMEDIA -> POSTDATAMEDIA
+```
+
+- PRE quiesces `touch_report` when needed so ODM can be released safely.
 - native Format Data performs the destructive wipe/unmap.
-- POSTDATAMEDIA resumes `touch_report` only if PRE stopped it.
-- touch should work immediately afterward without a recovery reboot.
+- POSTDATAMEDIA resumes `touch_report` only when PRE stopped it.
+- physical touch is expected to return without requiring a recovery reboot.
+
+If post-Format Data touch loss reappears, capture `/tmp/recovery.log` and treat it as regression evidence rather than documenting a reboot as the normal workaround.
 
 ## Advanced Wipe Data
-Build60 inherits the validated Build58 same-worker sequence:
-`PRE -> native WIPE -> POSTLIST -> queue_done`
 
-This preserves `/data/media` while repairing only the missing Android 16 FBE parent skeleton required
-for the next decrypt cycle.
+The validated preserve-media Data wipe architecture uses one worker:
 
-## Large HyperDot ZIP transfer during testing
-The project observed corruption when very large ROM ZIPs were copied through OrangeFox MTP.
-For multi-gigabyte ROM ZIP testing, ADB push was the validated transfer path.
+```text
+PRE -> native WIPE -> POSTLIST -> queue_done
+```
 
-## Separate Windows BAT
-The HyperDot Windows BAT flasher is not part of this OrangeFox release artifact and had not yet completed
-the separate Build60 BAT runtime test when this package was created.
+This preserves `/data/media` while repairing only the Android 16 FBE parent-directory skeleton required for the next decrypt cycle.
+
+## Large ROM ZIP transfers
+
+During project testing, very large ROM ZIP files were observed to be vulnerable to corruption when transferred through OrangeFox MTP.
+
+For multi-gigabyte ROM testing, the validated transfer path is:
+
+```bash
+adb push <rom.zip> /sdcard/
+```
+
+This is a testing/transport note, not a claim that normal MTP operation is universally broken.
+
+## OTA / survival
+
+OrangeFox OTA/survival functionality is intentionally unsupported for this unofficial release.

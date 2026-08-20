@@ -38,7 +38,7 @@ SHA256:
 
 - Android 16 FBE decryption
 - KeyMint / Weaver / AuthSecret integration
-- Global ID, China, HyperOS Mod decryption support
+- Global ID, China, HyperOS Mod
 - Stable encrypted ↔ decrypted recovery settings lifecycle
 - Recovery Password support
 - Persistent theme, accent and navigation settings
@@ -94,3 +94,14 @@ If the device is already Fenrir and Fenrir Install / Repair is only verifying or
 - This is an unofficial OrangeFox build.
 - OrangeFox OTA / survival functionality is intentionally unsupported for this release.
 - Fenrir is device-specific to `klee`; do not use its assets or procedures on another codename.
+
+## Documentation
+
+- [Installation / Operational Guide](docs/project/INSTALLATION.md)
+- [Changelog](docs/project/CHANGELOG.md)
+- [Runtime Test Matrix](docs/project/TEST_MATRIX.md)
+- [Known Notes / Boundaries](docs/project/KNOWN_NOTES.md)
+- [Build History](docs/project/BUILD-HISTORY.md)
+- [Technical History](docs/project/TECHNICAL-HISTORY.md)
+- [Source Status](docs/project/SOURCE-STATUS.md)
+- [Building](docs/project/BUILDING.md)

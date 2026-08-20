@@ -1,0 +1,4 @@
+# OrangeFox R12.0 for POCO X8 Pro (klee)
+# Public runtime release — 2026-08-20
+
+5740bd9c17e92d32e4dc24b02792a5c8aa54df94ad5233c1370af995269bcaf2  OrangeFox-R12.0-Unofficial-klee-Fenrir-20260820.img
