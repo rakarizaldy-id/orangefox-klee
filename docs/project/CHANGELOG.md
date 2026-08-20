@@ -3,6 +3,22 @@
 This is the public/user-facing changelog. For the complete experimental chronology, including rejected
 builds and root-cause work, see `CHANGELOG-FULL-CHAT1-TO-CHAT9.md` and `TECHNICAL-HISTORY.md`.
 
+## 2026-08-20 — OrangeFox R12.0
+
+- Android 16 FBE decryption support for `klee`.
+- KeyMint, Weaver and AuthSecret integration.
+- Stable encrypted/decrypted recovery settings lifecycle.
+- Recovery Password lifecycle fixes.
+- Persistent theme/accent/navigation settings.
+- Home/Back decrypt-page navigation fixes.
+- NVT touch and AW86927 haptic support.
+- Fastbootd support.
+- Fenrir Install / Repair with A/B verification and hash-verified writes.
+- Recovery Diagnostics and Storage / Partition Status tools.
+- Safe saved-log cleanup without truncating `/tmp/recovery.log`.
+- Recovery UI race and soft-restart fixes.
+
+
 ## Build60 — 19 August 2026 — FINAL
 
 ### Format Data touch lifecycle

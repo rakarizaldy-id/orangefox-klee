@@ -16,56 +16,91 @@ Maintained by **RakaRizaldy**.
 | Partition scheme | Virtual A/B + Dynamic Partitions |
 | Android baseline | Android 16 / HyperOS |
 
-
 ## Current Release
 
-**OrangeFox R12.0 Build60 FINAL**
+**OrangeFox R12.0 — 2026-08-20**
 
-Build60 is the current runtime-validated release for `klee`.
+This is the current runtime-validated OrangeFox R12.0 release for `klee`.
+
+### Recovery image
+
+`OrangeFox-R12.0-Unofficial-klee-Fenrir-20260820.img`
 
 SHA256:
 
 ```text
-aa7fdc2ebc9f30ecbeaf18a6d982fd86de782600bdd30adf676a17c22e4d0251
+5740bd9c17e92d32e4dc24b02792a5c8aa54df94ad5233c1370af995269bcaf2
 ```
 
-[Download OrangeFox R12.0 Build60 FINAL](https://github.com/rakarizaldy-id/orangefox-klee/releases/tag/R12.0-Build60)
+### Release package
+
+`OrangeFox-R12.0-Unofficial-klee-Fenrir-20260820.zip`
+
+SHA256:
+
+```text
+3f2202b04822ebdfab42b6d2a8219af04316caa2c26fafab7e43bfe6d63461f1
+```
+
+[Download OrangeFox R12.0 for klee](https://github.com/rakarizaldy-id/orangefox-klee/releases/tag/OrangeFox-R12.0-klee-20260820)
 
 ## Features
 
 - Android 16 FBE decryption
+- KeyMint / Weaver / AuthSecret integration
 - IDXM and Pure CN decryption support
+- Stable encrypted ↔ decrypted recovery settings lifecycle
+- Recovery Password support
+- Persistent theme, accent and navigation settings
 - Stable Novatek touch support
 - Post-Format Data touch recovery
 - AW86927 haptic support
-- OrangeFox settings persistence
-- Fastbootd support
-- Dynamic partition / SUPER support
-- Recovery Self-Test
-- Storage / Partition Health
-- Clear OrangeFox Logs
-- Fenrir Install / Repair support
+- ADB
+- MTP
+- USB-OTG
+- Fastbootd
+- Virtual A/B and dynamic partition support
+- ZIP / image flashing
+- Backup / Restore
+- Fenrir Install / Repair
+- Recovery Diagnostics
+- Storage / Partition Status
+- Clear Saved OrangeFox Logs
 
+## Validated Firmware
+
+Runtime validation includes:
+
+- HyperOS `OS3.0.303.0.WPJIDXM`
+- HyperOS `OS3.0.304.0.WPJCNXM`
 
 ## Installation
 
 Recovery is installed to `vendor_boot`.
 
 ```bash
-fastboot flash vendor_boot OrangeFox-R12.0-Unofficial-klee-RakaRizaldy-Fenrir-Build60-20260819-FINAL-MASTER-RELEASE.img
+fastboot flash vendor_boot OrangeFox-R12.0-Unofficial-klee-Fenrir-20260820.img
 fastboot reboot recovery
 ```
 
+## Fenrir
 
-For first conversion to Fenrir:
+For the **first true non-Fenrir → Fenrir conversion**:
 
+```text
 Fenrir Install / Repair
         ↓
 Format Data
         ↓
 Reboot System
+```
 
+**Format Data is mandatory before booting System after the first Fenrir conversion.**
 
-Format Data is mandatory for the first Fenrir conversion.
+If the device is already Fenrir and Fenrir Install / Repair is only verifying or repairing the inactive `vendor_boot` slot, another Format Data is not automatically required.
 
-Full instructions are available in [Installation Guide](docs/project/INSTALLATION.md).
+## Notes
+
+- This is an unofficial OrangeFox build.
+- OrangeFox OTA / survival functionality is intentionally unsupported for this release.
+- Fenrir is device-specific to `klee`; do not use its assets or procedures on another codename.
